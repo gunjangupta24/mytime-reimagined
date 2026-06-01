@@ -1,0 +1,160 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* McKinsey Brand Palette */
+  --nav: #051C2C;
+  --nav-foreground: #FFFFFF;
+  --nav-border: #0A2E46;
+
+  --background: #F7F8FA;
+  --foreground: #1A1A1A;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1A;
+
+  --primary: #003A6B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EEF1F6;
+  --secondary-foreground: #003A6B;
+  --muted: #EEF1F6;
+  --muted-foreground: #6B7280;
+  --accent: #2251FF;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #E2E6ED;
+  --input: #E2E6ED;
+  --ring: #2251FF;
+
+  /* Charts / category colors */
+  --chart-1: #2251FF;
+  --chart-2: #16A34A;
+  --chart-3: #6B7280;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
+
+  --radius: 0.5rem;
+
+  --sidebar: #F7F8FA;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #003A6B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EEF1F6;
+  --sidebar-accent-foreground: #003A6B;
+  --sidebar-border: #E2E6ED;
+  --sidebar-ring: #2251FF;
+}
+
+.dark {
+  --nav: #051C2C;
+  --nav-foreground: #FFFFFF;
+  --nav-border: #0A2E46;
+
+  --background: #081629;
+  --foreground: #EBF0F7;
+  --card: #0D2040;
+  --card-foreground: #EBF0F7;
+  --popover: #0D2040;
+  --popover-foreground: #EBF0F7;
+
+  --primary: #5B99D9;
+  --primary-foreground: #051C2C;
+  --secondary: #122A45;
+  --secondary-foreground: #9DC4E8;
+  --muted: #122A45;
+  --muted-foreground: #8AA3BA;
+  --accent: #4D6FFF;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #F87171;
+  --destructive-foreground: #FFFFFF;
+  --border: #1A3558;
+  --input: #1A3558;
+  --ring: #4D6FFF;
+
+  --chart-1: #4D6FFF;
+  --chart-2: #22C55E;
+  --chart-3: #9CA3AF;
+  --chart-4: #FBBF24;
+  --chart-5: #F87171;
+
+  --sidebar: #081629;
+  --sidebar-foreground: #EBF0F7;
+  --sidebar-primary: #5B99D9;
+  --sidebar-primary-foreground: #051C2C;
+  --sidebar-accent: #122A45;
+  --sidebar-accent-foreground: #9DC4E8;
+  --sidebar-border: #1A3558;
+  --sidebar-ring: #4D6FFF;
+}
+
+@theme inline {
+  --font-sans: 'Inter', 'Inter Fallback', sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+
+  /* Custom tokens */
+  --color-nav: var(--nav);
+  --color-nav-foreground: var(--nav-foreground);
+  --color-nav-border: var(--nav-border);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Remove number input spinners */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
