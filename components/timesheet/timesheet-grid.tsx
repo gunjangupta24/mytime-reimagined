@@ -111,7 +111,7 @@ export function TimesheetGrid() {
                   <div className="flex items-center gap-2.5">
                     <span
                       className="w-2 h-2 rounded-full flex-shrink-0 ring-2 ring-offset-1"
-                      style={{ backgroundColor: catColor, ringColor: catColor + '40' }}
+                      style={{ backgroundColor: catColor, boxShadow: `0 0 0 2px ${catColor}40` }}
                       title={cc.category}
                     />
                     <div className="min-w-0">
