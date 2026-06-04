@@ -93,6 +93,20 @@ export function formatPeriodLabel(start: Date, end: Date): string {
   return `${startStr} – ${endStr}`
 }
 
+/**
+ * Compact label like "Jun 1–15" or "Jun 28–Jul 12" — no year.
+ * Used as subtle feedback next to the period arrows.
+ */
+export function formatCompactPeriodLabel(start: Date, end: Date): string {
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+  const startMonth = start.toLocaleDateString('en-US', { month: 'short' })
+  if (sameMonth) {
+    return `${startMonth} ${start.getDate()}–${end.getDate()}`
+  }
+  const endMonth = end.toLocaleDateString('en-US', { month: 'short' })
+  return `${startMonth} ${start.getDate()}–${endMonth} ${end.getDate()}`
+}
+
 export function formatColumnHeader(date: Date): { day: string; date: string } {
   return {
     day: date.toLocaleDateString('en-US', { weekday: 'short' }),

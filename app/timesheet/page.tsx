@@ -7,15 +7,16 @@ import { TimesheetGrid } from '@/components/timesheet/timesheet-grid'
 import { MobileDayView } from '@/components/timesheet/mobile-day-view'
 import { Toolbar, StatusBar } from '@/components/timesheet/toolbar-statusbar'
 import { useTimesheet } from '@/components/timesheet/timesheet-context'
+import { formatPeriodLabel } from '@/components/timesheet/date-utils'
 
-function EmptyState() {
+function EmptyState({ periodLabel }: { periodLabel: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-border bg-card/40 px-6 py-16 flex flex-col items-center text-center gap-3">
       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
         <Sparkles className="w-5 h-5 text-primary" />
       </div>
       <div>
-        <p className="text-base font-semibold text-foreground">No hours yet</p>
+        <p className="text-base font-semibold text-foreground">No hours for {periodLabel}</p>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">
           Add a charge code, fill defaults, or copy your last period to get started.
         </p>
@@ -25,7 +26,8 @@ function EmptyState() {
 }
 
 export default function TimesheetPage() {
-  const { hasStarted } = useTimesheet()
+  const { hasStarted, periodStart, periodEnd } = useTimesheet()
+  const periodLabel = formatPeriodLabel(periodStart, periodEnd)
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 flex flex-col gap-5">
@@ -62,7 +64,7 @@ export default function TimesheetPage() {
           <StatusBar />
         </>
       ) : (
-        <EmptyState />
+        <EmptyState periodLabel={periodLabel} />
       )}
     </div>
   )

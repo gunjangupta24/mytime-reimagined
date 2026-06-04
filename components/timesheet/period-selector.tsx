@@ -4,9 +4,10 @@ import { ChevronLeft, ChevronRight, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTimesheet } from './timesheet-context'
 import { COUNTRY_LABELS, Country } from './holidays'
+import { formatCompactPeriodLabel } from './date-utils'
 
 export function PeriodSelector() {
-  const { periodType, setPeriodType, navigatePeriod, country, setCountry } = useTimesheet()
+  const { periodType, setPeriodType, navigatePeriod, country, setCountry, periodStart, periodEnd } = useTimesheet()
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -56,6 +57,9 @@ export function PeriodSelector() {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
+        <span className="min-w-[88px] text-center text-xs font-medium text-muted-foreground tabular-nums">
+          {formatCompactPeriodLabel(periodStart, periodEnd)}
+        </span>
         <Button
           variant="ghost"
           size="icon"
