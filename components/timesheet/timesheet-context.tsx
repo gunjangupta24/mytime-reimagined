@@ -5,12 +5,13 @@ import {
   ChargeCode,
   PeriodType,
   TimesheetStatus,
-  DEFAULT_CHARGE_CODES,
+  ASSIGNED_CHARGE_CODES,
 } from './types'
 import { getPeriodBounds, addPeriod, getDatesInPeriod, isWeekend, formatDate } from './date-utils'
 
 interface TimesheetContextValue {
   chargeCodes: ChargeCode[]
+  assignedCodes: ChargeCode[]
   entries: Record<string, Record<string, number | ''>>
   periodType: PeriodType
   referenceDate: Date
@@ -24,6 +25,7 @@ interface TimesheetContextValue {
   submitTimesheet: () => void
   resetTimesheet: () => void
   addChargeCode: (code: ChargeCode) => void
+  removeChargeCode: (id: string) => void
   navigatePeriod: (delta: number) => void
   setPeriodType: (type: PeriodType) => void
 }
@@ -31,7 +33,7 @@ interface TimesheetContextValue {
 const TimesheetContext = createContext<TimesheetContextValue | null>(null)
 
 export function TimesheetProvider({ children }: { children: React.ReactNode }) {
-  const [chargeCodes, setChargeCodes] = useState<ChargeCode[]>(DEFAULT_CHARGE_CODES)
+  const [chargeCodes, setChargeCodes] = useState<ChargeCode[]>([])
   const [entries, setEntries] = useState<Record<string, Record<string, number | ''>>>({})
   const [periodType, setPeriodTypeState] = useState<PeriodType>('semi-monthly')
   const [referenceDate, setReferenceDate] = useState<Date>(new Date(2026, 5, 1)) // Jun 1 2026
@@ -59,8 +61,18 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   )
 
   const fillDefaults = useCallback(() => {
-    const growCodes = chargeCodes.filter((c) => c.category === 'grow')
-    if (growCodes.length === 0) return
+    // Ensure at least one code is present — pick the user's primary grow code from the assigned pool.
+    const effectiveCodes: ChargeCode[] = chargeCodes.length > 0
+      ? chargeCodes
+      : [ASSIGNED_CHARGE_CODES.find(c => c.category === 'grow') ?? ASSIGNED_CHARGE_CODES[0]]
+
+    if (chargeCodes.length === 0) {
+      setChargeCodes(effectiveCodes)
+    }
+
+    const growCodes = effectiveCodes.filter((c) => c.category === 'grow')
+    const targets = growCodes.length > 0 ? growCodes : effectiveCodes
+    if (targets.length === 0) return
 
     const allDates = getDatesInPeriod(periodStart, periodEnd)
     const workdays = allDates.filter((d) => !isWeekend(d))
@@ -70,9 +82,9 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       workdays.forEach((date) => {
         const dateStr = formatDate(date)
         next[dateStr] = { ...(next[dateStr] || {}) }
-        const hoursEach = Math.floor(7 / growCodes.length)
-        const remainder = 7 - hoursEach * growCodes.length
-        growCodes.forEach((cc, i) => {
+        const hoursEach = Math.floor(7 / targets.length)
+        const remainder = 7 - hoursEach * targets.length
+        targets.forEach((cc, i) => {
           next[dateStr][cc.id] = hoursEach + (i === 0 ? remainder : 0)
         })
       })
@@ -83,24 +95,37 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   }, [chargeCodes, periodStart, periodEnd])
 
   const copyLastPeriod = useCallback(() => {
-    // Simulate copy from last period using preset values
+    // Simulate "last period" — auto-add a representative mix of codes if empty.
+    const effectiveCodes: ChargeCode[] = chargeCodes.length > 0
+      ? chargeCodes
+      : [
+          ASSIGNED_CHARGE_CODES.find(c => c.category === 'grow') ?? ASSIGNED_CHARGE_CODES[0],
+          ASSIGNED_CHARGE_CODES.find(c => c.category === 'non-billable') ?? ASSIGNED_CHARGE_CODES[0],
+        ].filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i)
+
+    if (chargeCodes.length === 0) {
+      setChargeCodes(effectiveCodes)
+    }
+
     const allDates = getDatesInPeriod(periodStart, periodEnd)
     const workdays = allDates.filter((d) => !isWeekend(d))
-    const growCodes = chargeCodes.filter((c) => c.category === 'grow')
-    const runCodes = chargeCodes.filter((c) => c.category === 'run')
+    const growCodes = effectiveCodes.filter((c) => c.category === 'grow')
+    const nonBillable = effectiveCodes.filter((c) => c.category === 'non-billable')
 
     setEntries((prev) => {
       const next = { ...prev }
       workdays.forEach((date, idx) => {
         const dateStr = formatDate(date)
-        next[dateStr] = {}
-        // Alternate pattern to mimic realistic data
-        growCodes.forEach((cc, i) => {
-          next[dateStr][cc.id] = i === 0 ? 4 : 3
-        })
-        runCodes.forEach((cc) => {
-          next[dateStr][cc.id] = idx % 3 === 0 ? 0 : ''
-        })
+        next[dateStr] = { ...(next[dateStr] || {}) }
+        // Most days: 7h on primary grow code. Friday-ish: split with admin/training.
+        if (idx % 5 === 4 && nonBillable.length > 0 && growCodes.length > 0) {
+          next[dateStr][growCodes[0].id] = 5
+          next[dateStr][nonBillable[0].id] = 2
+        } else if (growCodes.length > 0) {
+          next[dateStr][growCodes[0].id] = 7
+        } else if (effectiveCodes.length > 0) {
+          next[dateStr][effectiveCodes[0].id] = 7
+        }
       })
       return next
     })
@@ -117,8 +142,26 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const addChargeCode = useCallback((code: ChargeCode) => {
-    setChargeCodes((prev) => [...prev, code])
+    setChargeCodes((prev) => {
+      if (prev.some((c) => c.id === code.id || c.code.toLowerCase() === code.code.toLowerCase())) {
+        return prev
+      }
+      return [...prev, code]
+    })
     setHasStarted(true)
+  }, [])
+
+  const removeChargeCode = useCallback((id: string) => {
+    setChargeCodes((prev) => prev.filter((c) => c.id !== id))
+    setEntries((prev) => {
+      const next: Record<string, Record<string, number | ''>> = {}
+      for (const dateStr of Object.keys(prev)) {
+        const row = { ...prev[dateStr] }
+        delete row[id]
+        next[dateStr] = row
+      }
+      return next
+    })
   }, [])
 
   const navigatePeriod = useCallback(
@@ -126,6 +169,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       setReferenceDate((prev) => addPeriod(prev, periodType, delta))
       setStatus('draft')
       setEntries({})
+      setChargeCodes([])
       setHasStarted(false)
     },
     [periodType]
@@ -135,12 +179,14 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
     setPeriodTypeState(type)
     setStatus('draft')
     setEntries({})
+    setChargeCodes([])
     setHasStarted(false)
   }, [])
 
   const value = useMemo<TimesheetContextValue>(
     () => ({
       chargeCodes,
+      assignedCodes: ASSIGNED_CHARGE_CODES,
       entries,
       periodType,
       referenceDate,
@@ -154,6 +200,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       submitTimesheet,
       resetTimesheet,
       addChargeCode,
+      removeChargeCode,
       navigatePeriod,
       setPeriodType,
     }),
@@ -172,6 +219,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       submitTimesheet,
       resetTimesheet,
       addChargeCode,
+      removeChargeCode,
       navigatePeriod,
       setPeriodType,
     ]

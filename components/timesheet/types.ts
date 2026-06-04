@@ -35,11 +35,24 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   'non-billable': 'Non-Billable',
 }
 
-export const DEFAULT_CHARGE_CODES: ChargeCode[] = [
-  { id: '1', code: 'PRJ-001', description: 'Project Alpha (Growth)', category: 'grow' },
-  { id: '2', code: 'PRJ-002', description: 'Project Alpha (Ops)',    category: 'run' },
-  { id: '3', code: 'PRJ-003', description: 'Project Beta',           category: 'grow' },
-  { id: '4', code: 'PRJ-004', description: 'Project Gamma',          category: 'run' },
-  { id: '5', code: 'TRN-001', description: 'Training',               category: 'non-billable' },
-  { id: '6', code: 'ADM-001', description: 'Admin',                  category: 'non-billable' },
+/**
+ * Codes the user is currently assigned to. These show up in the
+ * picker so the user can add them to their timesheet with one click —
+ * no need to remember codes or fill in descriptions.
+ */
+export const ASSIGNED_CHARGE_CODES: ChargeCode[] = [
+  { id: 'a1', code: 'PRJ-001', description: 'Project Alpha — Growth Strategy',     category: 'grow' },
+  { id: 'a2', code: 'PRJ-002', description: 'Project Alpha — Operations',          category: 'run' },
+  { id: 'a3', code: 'PRJ-003', description: 'Project Beta — Discovery',            category: 'grow' },
+  { id: 'a4', code: 'PRJ-004', description: 'Project Gamma — Implementation',      category: 'run' },
+  { id: 'a5', code: 'PRJ-005', description: 'Project Delta — Diagnostic',          category: 'grow' },
+  { id: 'a6', code: 'TRN-001', description: 'Training & Learning',                 category: 'non-billable' },
+  { id: 'a7', code: 'ADM-001', description: 'Administration',                      category: 'non-billable' },
+  { id: 'a8', code: 'REC-001', description: 'Recruiting',                          category: 'non-billable' },
+  { id: 'a9', code: 'FW-001',  description: 'Firm Work',                           category: 'non-billable' },
 ]
+
+/**
+ * Kept for backwards compatibility — equivalent to ASSIGNED_CHARGE_CODES.
+ */
+export const DEFAULT_CHARGE_CODES = ASSIGNED_CHARGE_CODES
