@@ -1,34 +1,15 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, Globe } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTimesheet } from './timesheet-context'
-import { COUNTRY_LABELS, Country } from './holidays'
 import { formatCompactPeriodLabel } from './date-utils'
 
 export function PeriodSelector() {
-  const { periodType, setPeriodType, navigatePeriod, country, setCountry, periodStart, periodEnd } = useTimesheet()
+  const { periodType, setPeriodType, navigatePeriod, periodStart, periodEnd } = useTimesheet()
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-      {/* Country / holiday calendar */}
-      <label className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card pl-2 pr-1 h-8 text-xs">
-        <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="sr-only">Holiday calendar</span>
-        <select
-          value={country}
-          onChange={(e) => setCountry(e.target.value as Country)}
-          className="bg-transparent border-0 outline-none focus:ring-0 text-xs font-medium text-foreground pr-1 cursor-pointer"
-          aria-label="Holiday calendar country"
-        >
-          {(Object.keys(COUNTRY_LABELS) as Country[]).map((c) => (
-            <option key={c} value={c}>
-              {COUNTRY_LABELS[c]}
-            </option>
-          ))}
-        </select>
-      </label>
-
       {/* Period type toggle */}
       <div className="inline-flex rounded-lg border border-border bg-muted p-0.5 text-sm">
         {(['semi-monthly', 'weekly'] as const).map((t) => (

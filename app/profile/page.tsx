@@ -1,11 +1,14 @@
 'use client'
 
 import { useTheme } from '@/components/theme-provider'
-import { Sun, Moon, MapPin, Mail, Building2 } from 'lucide-react'
+import { Sun, Moon, MapPin, Building2, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTimesheet } from '@/components/timesheet/timesheet-context'
+import { COUNTRY_LABELS, Country } from '@/components/timesheet/holidays'
 
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme()
+  const { country, setCountry } = useTimesheet()
 
   return (
     <div className="max-w-[600px] mx-auto px-4 sm:px-6 py-6 flex flex-col gap-5">
@@ -35,10 +38,40 @@ export default function ProfilePage() {
       {/* Preferences */}
       <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-foreground mb-4">Preferences</h2>
-        <div className="flex items-center justify-between py-2">
-          <div>
-            <p className="text-sm font-medium text-foreground">Dark Mode</p>
-            <p className="text-xs text-muted-foreground">Toggle light / dark appearance</p>
+
+        <div className="flex items-center justify-between py-3 border-b border-border">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+              <Globe className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Holiday Calendar</p>
+              <p className="text-xs text-muted-foreground">Public holidays shown on your timesheet</p>
+            </div>
+          </div>
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value as Country)}
+            className="h-9 px-3 rounded-md border border-input bg-background text-sm font-medium text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label="Holiday calendar country"
+          >
+            {(Object.keys(COUNTRY_LABELS) as Country[]).map((c) => (
+              <option key={c} value={c}>
+                {COUNTRY_LABELS[c]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between py-3">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+              {theme === 'dark' ? <Moon className="w-4 h-4 text-muted-foreground" /> : <Sun className="w-4 h-4 text-muted-foreground" />}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Dark Mode</p>
+              <p className="text-xs text-muted-foreground">Toggle light / dark appearance</p>
+            </div>
           </div>
           <Button
             variant="outline"
