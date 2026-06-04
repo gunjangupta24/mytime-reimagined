@@ -22,6 +22,7 @@ interface TimesheetContextValue {
   hasStarted: boolean
   recentlyAddedIds: Set<string>
   country: Country
+  includeWeekends: boolean
   setEntry: (chargeCodeId: string, dateStr: string, hours: number | '') => void
   fillDefaults: () => void
   copyLastPeriod: () => void
@@ -32,6 +33,7 @@ interface TimesheetContextValue {
   navigatePeriod: (delta: number) => void
   setPeriodType: (type: PeriodType) => void
   setCountry: (country: Country) => void
+  setIncludeWeekends: (include: boolean) => void
 }
 
 const TimesheetContext = createContext<TimesheetContextValue | null>(null)
@@ -45,6 +47,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   const [hasStarted, setHasStarted] = useState(false)
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set())
   const [country, setCountry] = useState<Country>('US')
+  const [includeWeekends, setIncludeWeekends] = useState(false)
 
   const { start: periodStart, end: periodEnd } = useMemo(
     () => getPeriodBounds(referenceDate, periodType),
@@ -219,6 +222,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       hasStarted,
       recentlyAddedIds,
       country,
+      includeWeekends,
       setEntry,
       fillDefaults,
       copyLastPeriod,
@@ -229,6 +233,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       navigatePeriod,
       setPeriodType,
       setCountry,
+      setIncludeWeekends,
     }),
     [
       chargeCodes,
@@ -241,6 +246,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       hasStarted,
       recentlyAddedIds,
       country,
+      includeWeekends,
       setEntry,
       fillDefaults,
       copyLastPeriod,

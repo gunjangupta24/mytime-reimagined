@@ -2,7 +2,7 @@
 
 import { useTimesheet } from './timesheet-context'
 import { getDatesInPeriod, isWeekend, formatDate } from './date-utils'
-import { Zap, Copy, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
+import { Zap, Copy, CheckCircle2, AlertCircle, Clock, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AddChargeCodeDialog } from './add-charge-code-dialog'
@@ -108,7 +108,7 @@ export function StatusBar() {
 }
 
 export function Toolbar() {
-  const { fillDefaults, copyLastPeriod } = useTimesheet()
+  const { fillDefaults, copyLastPeriod, includeWeekends, setIncludeWeekends } = useTimesheet()
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -130,6 +130,16 @@ export function Toolbar() {
       >
         <Copy className="h-3.5 w-3.5" />
         Copy Last Period
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIncludeWeekends(!includeWeekends)}
+        className="gap-1.5 h-8 text-xs font-medium text-muted-foreground hover:text-foreground sm:ml-auto"
+        aria-pressed={includeWeekends}
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        {includeWeekends ? 'Hide weekend' : 'Show weekend'}
       </Button>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, MapPin, PartyPopper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTimesheet } from './timesheet-context'
@@ -147,11 +147,21 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
 }
 
 export function MobileDayView() {
-  const { periodStart, periodEnd, country } = useTimesheet()
-  const dates = getDatesInPeriod(periodStart, periodEnd)
+  const { periodStart, periodEnd, country, includeWeekends } = useTimesheet()
+  const allDates = getDatesInPeriod(periodStart, periodEnd)
+  const dates = includeWeekends ? allDates : allDates.filter((d) => !isWeekend(d))
   const [currentIdx, setCurrentIdx] = useState(0)
 
-  const currentDate = dates[currentIdx]
+  // Clamp index when the visible-days list shrinks (e.g. weekend toggle off).
+  useEffect(() => {
+    if (currentIdx > dates.length - 1) {
+      setCurrentIdx(Math.max(0, dates.length - 1))
+    }
+  }, [currentIdx, dates.length])
+
+  const safeIdx = Math.min(currentIdx, Math.max(0, dates.length - 1))
+  const currentDate = dates[safeIdx]
+  if (!currentDate) return null
 
   return (
     <div className="flex flex-col gap-4">
@@ -162,7 +172,7 @@ export function MobileDayView() {
           size="icon"
           className="h-9 w-9"
           onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
-          disabled={currentIdx === 0}
+          disabled={safeIdx === 0}
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
@@ -180,7 +190,7 @@ export function MobileDayView() {
                 title={dotHoliday?.name}
                 className={cn(
                   'rounded-full transition-all',
-                  i === currentIdx
+                  i === safeIdx
                     ? 'w-4 h-2 bg-primary'
                     : dotHoliday
                     ? 'w-1.5 h-1.5 bg-amber-400'
@@ -198,18 +208,18 @@ export function MobileDayView() {
           size="icon"
           className="h-9 w-9"
           onClick={() => setCurrentIdx(i => Math.min(dates.length - 1, i + 1))}
-          disabled={currentIdx === dates.length - 1}
+          disabled={safeIdx === dates.length - 1}
         >
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Day card */}
-      <DayCard date={currentDate} dayIndex={currentIdx} />
+      <DayCard date={currentDate} dayIndex={safeIdx} />
 
       {/* Swipe hint */}
       <p className="text-center text-xs text-muted-foreground/60">
-        {currentIdx + 1} of {dates.length} days
+        {safeIdx + 1} of {dates.length} days
       </p>
     </div>
   )

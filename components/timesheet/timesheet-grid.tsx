@@ -22,11 +22,12 @@ function DailyTotalBadge({ total }: { total: number }) {
 }
 
 export function TimesheetGrid() {
-  const { chargeCodes, entries, setEntry, periodStart, periodEnd, status, recentlyAddedIds, country } = useTimesheet()
+  const { chargeCodes, entries, setEntry, periodStart, periodEnd, status, recentlyAddedIds, country, includeWeekends } = useTimesheet()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
 
-  const dates = getDatesInPeriod(periodStart, periodEnd)
+  const allDates = getDatesInPeriod(periodStart, periodEnd)
+  const dates = includeWeekends ? allDates : allDates.filter((d) => !isWeekend(d))
   const isReadOnly = status === 'submitted'
 
   // Per-day totals (across all codes — used for footer)
