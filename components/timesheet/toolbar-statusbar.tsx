@@ -60,7 +60,11 @@ export function StatusBar() {
     periodStart,
     periodEnd,
     chargeCodes,
+    hasStarted,
     lastSavedAt,
+    saveTimesheet,
+    submitTimesheet,
+    resetTimesheet,
   } = useTimesheet()
 
   const dates = getDatesInPeriod(periodStart, periodEnd)
@@ -119,60 +123,8 @@ export function StatusBar() {
         </div>
       </div>
 
-    </div>
-  )
-}
-
-export function Toolbar() {
-  const {
-    fillDefaults,
-    copyLastPeriod,
-    includeWeekends,
-    setIncludeWeekends,
-    status,
-    hasStarted,
-    saveTimesheet,
-    submitTimesheet,
-    resetTimesheet,
-  } = useTimesheet()
-
-  return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
-      {/* Entry helpers */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <AddChargeCodeDialog />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fillDefaults}
-          className="gap-1.5 h-8 text-xs font-medium"
-        >
-          <Zap className="h-3.5 w-3.5 text-amber-500" />
-          Fill Defaults
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={copyLastPeriod}
-          className="gap-1.5 h-8 text-xs font-medium"
-        >
-          <Copy className="h-3.5 w-3.5" />
-          Copy Last Period
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIncludeWeekends(!includeWeekends)}
-          className="gap-1.5 h-8 text-xs font-medium text-muted-foreground hover:text-foreground"
-          aria-pressed={includeWeekends}
-        >
-          <CalendarDays className="h-3.5 w-3.5" />
-          {includeWeekends ? 'Hide weekend' : 'Show weekend'}
-        </Button>
-      </div>
-
-      {/* Save / Submit — always visible so users can find them */}
-      <div className="flex items-center gap-2 sm:ml-auto">
+      {/* Right: actions */}
+      <div className="flex items-center gap-2">
         {status === 'submitted' ? (
           <Button
             size="sm"
@@ -209,11 +161,49 @@ export function Toolbar() {
               style={{ backgroundColor: '#003A6B', color: '#fff' }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Submit
+              Submit Timesheet
             </Button>
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+export function Toolbar() {
+  const { fillDefaults, copyLastPeriod, includeWeekends, setIncludeWeekends } = useTimesheet()
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <AddChargeCodeDialog />
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={fillDefaults}
+        className="gap-1.5 h-8 text-xs font-medium"
+      >
+        <Zap className="h-3.5 w-3.5 text-amber-500" />
+        Fill Defaults
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={copyLastPeriod}
+        className="gap-1.5 h-8 text-xs font-medium"
+      >
+        <Copy className="h-3.5 w-3.5" />
+        Copy Last Period
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIncludeWeekends(!includeWeekends)}
+        className="gap-1.5 h-8 text-xs font-medium text-muted-foreground hover:text-foreground sm:ml-auto"
+        aria-pressed={includeWeekends}
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        {includeWeekends ? 'Hide weekend' : 'Show weekend'}
+      </Button>
     </div>
   )
 }

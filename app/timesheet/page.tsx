@@ -59,13 +59,13 @@ export default function TimesheetPage() {
           <div className="md:hidden">
             <MobileDayView />
           </div>
-
-          {/* Status bar */}
-          <StatusBar />
         </>
       ) : (
         <EmptyState periodLabel={periodLabel} />
       )}
+
+      {/* Status bar + Save/Submit — always visible so users can find them */}
+      <StatusBar />
     </div>
   )
 }
