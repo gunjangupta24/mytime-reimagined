@@ -1,20 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin, PartyPopper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTimesheet } from './timesheet-context'
 import { getDatesInPeriod, isWeekend, formatDate } from './date-utils'
+import { getHoliday } from './holidays'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
 
 function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
-  const { chargeCodes, entries, setEntry, status, recentlyAddedIds } = useTimesheet()
+  const { chargeCodes, entries, setEntry, status, recentlyAddedIds, country } = useTimesheet()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const ds = formatDate(date)
   const isReadOnly = status === 'submitted'
   const weekend = isWeekend(date)
+  const holiday = !weekend ? getHoliday(ds, country) : null
 
   const catColors: Record<string, string> = {
     grow: isDark ? '#4D6FFF' : '#2251FF',
@@ -48,30 +50,45 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
   return (
     <div className={cn(
       'rounded-xl border border-border bg-card shadow-sm overflow-hidden',
-      weekend && 'opacity-60'
+      weekend && 'opacity-60',
+      holiday && 'border-amber-200 dark:border-amber-900'
     )}>
       {/* Card header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
+      <div className={cn(
+        'flex items-center justify-between px-4 py-3 border-b border-border',
+        holiday ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-muted/20'
+      )}>
         <div>
           <p className="font-semibold text-foreground">{dayName}</p>
           <p className="text-xs text-muted-foreground">{dateStr}</p>
+          {holiday && (
+            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+              <PartyPopper className="w-3 h-3" />
+              {holiday.name}
+            </p>
+          )}
         </div>
         <div className="text-right">
           <p className="text-xs text-muted-foreground mb-0.5">Total</p>
           <p className={cn('text-lg font-bold tabular-nums', totalColor)}>
-            {dayTotal}h
+            {holiday ? '—' : `${dayTotal}h`}
           </p>
         </div>
       </div>
 
       {/* Charge code rows */}
       <div className="divide-y divide-border/60">
-        {visibleCodes.length === 0 && !weekend && (
+        {holiday && (
+          <p className="px-4 py-6 text-center text-xs text-amber-700 dark:text-amber-400">
+            Public holiday — no entry needed.
+          </p>
+        )}
+        {!holiday && visibleCodes.length === 0 && !weekend && (
           <p className="px-4 py-6 text-center text-xs text-muted-foreground">
             No hours yet. Add a code from the toolbar above.
           </p>
         )}
-        {visibleCodes.map(cc => {
+        {!holiday && visibleCodes.map(cc => {
           const val = entries[ds]?.[cc.id]
           return (
             <div key={cc.id} className="flex items-center justify-between px-4 py-2.5 gap-3">
@@ -130,7 +147,7 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
 }
 
 export function MobileDayView() {
-  const { periodStart, periodEnd } = useTimesheet()
+  const { periodStart, periodEnd, country } = useTimesheet()
   const dates = getDatesInPeriod(periodStart, periodEnd)
   const [currentIdx, setCurrentIdx] = useState(0)
 
@@ -154,15 +171,19 @@ export function MobileDayView() {
         <div className="flex items-center gap-1.5">
           {dates.map((_, i) => {
             const weekend = isWeekend(dates[i])
+            const dotHoliday = !weekend ? getHoliday(formatDate(dates[i]), country) : null
             return (
               <button
                 key={i}
                 onClick={() => setCurrentIdx(i)}
                 aria-label={`Go to day ${i + 1}`}
+                title={dotHoliday?.name}
                 className={cn(
                   'rounded-full transition-all',
                   i === currentIdx
                     ? 'w-4 h-2 bg-primary'
+                    : dotHoliday
+                    ? 'w-1.5 h-1.5 bg-amber-400'
                     : weekend
                     ? 'w-1.5 h-1.5 bg-border'
                     : 'w-1.5 h-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70'

@@ -7,6 +7,7 @@ import {
   TimesheetStatus,
   ASSIGNED_CHARGE_CODES,
 } from './types'
+import { Country } from './holidays'
 import { getPeriodBounds, addPeriod, getDatesInPeriod, isWeekend, formatDate } from './date-utils'
 
 interface TimesheetContextValue {
@@ -20,6 +21,7 @@ interface TimesheetContextValue {
   periodEnd: Date
   hasStarted: boolean
   recentlyAddedIds: Set<string>
+  country: Country
   setEntry: (chargeCodeId: string, dateStr: string, hours: number | '') => void
   fillDefaults: () => void
   copyLastPeriod: () => void
@@ -29,6 +31,7 @@ interface TimesheetContextValue {
   removeChargeCode: (id: string) => void
   navigatePeriod: (delta: number) => void
   setPeriodType: (type: PeriodType) => void
+  setCountry: (country: Country) => void
 }
 
 const TimesheetContext = createContext<TimesheetContextValue | null>(null)
@@ -41,6 +44,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<TimesheetStatus>('draft')
   const [hasStarted, setHasStarted] = useState(false)
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set())
+  const [country, setCountry] = useState<Country>('IN')
 
   const { start: periodStart, end: periodEnd } = useMemo(
     () => getPeriodBounds(referenceDate, periodType),
@@ -214,6 +218,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       periodEnd,
       hasStarted,
       recentlyAddedIds,
+      country,
       setEntry,
       fillDefaults,
       copyLastPeriod,
@@ -223,6 +228,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       removeChargeCode,
       navigatePeriod,
       setPeriodType,
+      setCountry,
     }),
     [
       chargeCodes,
@@ -234,6 +240,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       periodEnd,
       hasStarted,
       recentlyAddedIds,
+      country,
       setEntry,
       fillDefaults,
       copyLastPeriod,

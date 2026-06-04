@@ -3,6 +3,7 @@
 import { MapPin } from 'lucide-react'
 import { useTimesheet } from './timesheet-context'
 import { getDatesInPeriod, isWeekend, formatDate, formatColumnHeader } from './date-utils'
+import { getHoliday } from './holidays'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
 
@@ -21,7 +22,7 @@ function DailyTotalBadge({ total }: { total: number }) {
 }
 
 export function TimesheetGrid() {
-  const { chargeCodes, entries, setEntry, periodStart, periodEnd, status, recentlyAddedIds } = useTimesheet()
+  const { chargeCodes, entries, setEntry, periodStart, periodEnd, status, recentlyAddedIds, country } = useTimesheet()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
 
@@ -74,18 +75,27 @@ export function TimesheetGrid() {
             {dates.map(d => {
               const ds = formatDate(d)
               const weekend = isWeekend(d)
+              const holiday = !weekend ? getHoliday(ds, country) : null
               const { day, date } = formatColumnHeader(d)
               return (
                 <th
                   key={ds}
+                  title={holiday?.name}
                   className={cn(
                     'text-center px-2 py-3 font-medium min-w-[68px]',
-                    weekend ? 'bg-muted/50 text-muted-foreground/50' : 'text-foreground'
+                    weekend && 'bg-muted/50 text-muted-foreground/50',
+                    holiday && 'bg-amber-50 dark:bg-amber-950/30',
+                    !weekend && !holiday && 'text-foreground'
                   )}
                 >
                   <div className="flex flex-col items-center gap-0.5">
                     <span className="text-[10px] uppercase tracking-wider font-medium opacity-60">{day}</span>
                     <span className="text-xs font-semibold">{date}</span>
+                    {holiday && (
+                      <span className="text-[9px] font-semibold text-amber-700 dark:text-amber-400 leading-tight mt-0.5 max-w-[64px] truncate">
+                        {holiday.name}
+                      </span>
+                    )}
                   </div>
                 </th>
               )
@@ -143,12 +153,27 @@ export function TimesheetGrid() {
                 {dates.map(d => {
                   const ds = formatDate(d)
                   const weekend = isWeekend(d)
+                  const holiday = !weekend ? getHoliday(ds, country) : null
                   const val = entries[ds]?.[cc.id]
 
                   if (weekend) {
                     return (
                       <td key={ds} className="text-center px-2 py-2 bg-muted/30">
                         <span className="text-muted-foreground/30 text-xs">—</span>
+                      </td>
+                    )
+                  }
+
+                  if (holiday) {
+                    return (
+                      <td
+                        key={ds}
+                        className="text-center px-2 py-2 bg-amber-50/60 dark:bg-amber-950/20"
+                        title={holiday.name}
+                      >
+                        <span className="text-amber-700/70 dark:text-amber-400/70 text-[10px] font-medium">
+                          Holiday
+                        </span>
                       </td>
                     )
                   }
@@ -206,10 +231,21 @@ export function TimesheetGrid() {
             {dates.map(d => {
               const ds = formatDate(d)
               const weekend = isWeekend(d)
+              const holiday = !weekend ? getHoliday(ds, country) : null
               return (
-                <td key={ds} className={cn('text-center px-2 py-2.5', weekend && 'opacity-30')}>
+                <td
+                  key={ds}
+                  className={cn(
+                    'text-center px-2 py-2.5',
+                    weekend && 'opacity-30',
+                    holiday && 'bg-amber-50/60 dark:bg-amber-950/20'
+                  )}
+                  title={holiday?.name}
+                >
                   {weekend ? (
                     <span className="text-muted-foreground/30 text-xs">—</span>
+                  ) : holiday ? (
+                    <span className="text-amber-700 dark:text-amber-400 text-[10px] font-semibold">Holiday</span>
                   ) : (
                     <DailyTotalBadge total={dayTotals[ds] ?? 0} />
                   )}
