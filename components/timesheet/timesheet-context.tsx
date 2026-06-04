@@ -62,15 +62,21 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
     []
   )
 
+  /** Keep only codes that have any hours in the period — pruning empty rows. */
+  function pruneEmpty(codes: ChargeCode[], next: Record<string, Record<string, number | ''>>, workdays: Date[]): ChargeCode[] {
+    return codes.filter((cc) =>
+      workdays.some((d) => {
+        const v = next[formatDate(d)]?.[cc.id]
+        return typeof v === 'number' && v > 0
+      })
+    )
+  }
+
   const fillDefaults = useCallback(() => {
     // Ensure at least one code is present — pick the user's primary grow code from the assigned pool.
     const effectiveCodes: ChargeCode[] = chargeCodes.length > 0
       ? chargeCodes
       : [ASSIGNED_CHARGE_CODES.find(c => c.category === 'grow') ?? ASSIGNED_CHARGE_CODES[0]]
-
-    if (chargeCodes.length === 0) {
-      setChargeCodes(effectiveCodes)
-    }
 
     const growCodes = effectiveCodes.filter((c) => c.category === 'grow')
     const targets = growCodes.length > 0 ? growCodes : effectiveCodes
@@ -79,22 +85,23 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
     const allDates = getDatesInPeriod(periodStart, periodEnd)
     const workdays = allDates.filter((d) => !isWeekend(d))
 
-    setEntries((prev) => {
-      const next = { ...prev }
-      workdays.forEach((date) => {
-        const dateStr = formatDate(date)
-        next[dateStr] = { ...(next[dateStr] || {}) }
-        const hoursEach = Math.floor(7 / targets.length)
-        const remainder = 7 - hoursEach * targets.length
-        targets.forEach((cc, i) => {
-          next[dateStr][cc.id] = hoursEach + (i === 0 ? remainder : 0)
-        })
+    const next: Record<string, Record<string, number | ''>> = { ...entries }
+    workdays.forEach((date) => {
+      const dateStr = formatDate(date)
+      next[dateStr] = { ...(next[dateStr] || {}) }
+      const hoursEach = Math.floor(7 / targets.length)
+      const remainder = 7 - hoursEach * targets.length
+      targets.forEach((cc, i) => {
+        next[dateStr][cc.id] = hoursEach + (i === 0 ? remainder : 0)
       })
-      return next
     })
+
+    setEntries(next)
+    setChargeCodes(pruneEmpty(effectiveCodes, next, workdays))
+    setRecentlyAddedIds(new Set())
     setStatus('draft')
     setHasStarted(true)
-  }, [chargeCodes, periodStart, periodEnd])
+  }, [chargeCodes, entries, periodStart, periodEnd])
 
   const copyLastPeriod = useCallback(() => {
     // Simulate "last period" — auto-add a representative mix of codes if empty.
@@ -105,35 +112,32 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
           ASSIGNED_CHARGE_CODES.find(c => c.category === 'non-billable') ?? ASSIGNED_CHARGE_CODES[0],
         ].filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i)
 
-    if (chargeCodes.length === 0) {
-      setChargeCodes(effectiveCodes)
-    }
-
     const allDates = getDatesInPeriod(periodStart, periodEnd)
     const workdays = allDates.filter((d) => !isWeekend(d))
     const growCodes = effectiveCodes.filter((c) => c.category === 'grow')
     const nonBillable = effectiveCodes.filter((c) => c.category === 'non-billable')
 
-    setEntries((prev) => {
-      const next = { ...prev }
-      workdays.forEach((date, idx) => {
-        const dateStr = formatDate(date)
-        next[dateStr] = { ...(next[dateStr] || {}) }
-        // Most days: 7h on primary grow code. Friday-ish: split with admin/training.
-        if (idx % 5 === 4 && nonBillable.length > 0 && growCodes.length > 0) {
-          next[dateStr][growCodes[0].id] = 5
-          next[dateStr][nonBillable[0].id] = 2
-        } else if (growCodes.length > 0) {
-          next[dateStr][growCodes[0].id] = 7
-        } else if (effectiveCodes.length > 0) {
-          next[dateStr][effectiveCodes[0].id] = 7
-        }
-      })
-      return next
+    const next: Record<string, Record<string, number | ''>> = { ...entries }
+    workdays.forEach((date, idx) => {
+      const dateStr = formatDate(date)
+      next[dateStr] = { ...(next[dateStr] || {}) }
+      // Most days: 7h on primary grow code. Friday-ish: split with admin/training.
+      if (idx % 5 === 4 && nonBillable.length > 0 && growCodes.length > 0) {
+        next[dateStr][growCodes[0].id] = 5
+        next[dateStr][nonBillable[0].id] = 2
+      } else if (growCodes.length > 0) {
+        next[dateStr][growCodes[0].id] = 7
+      } else if (effectiveCodes.length > 0) {
+        next[dateStr][effectiveCodes[0].id] = 7
+      }
     })
+
+    setEntries(next)
+    setChargeCodes(pruneEmpty(effectiveCodes, next, workdays))
+    setRecentlyAddedIds(new Set())
     setStatus('draft')
     setHasStarted(true)
-  }, [chargeCodes, periodStart, periodEnd])
+  }, [chargeCodes, entries, periodStart, periodEnd])
 
   const submitTimesheet = useCallback(() => {
     setStatus('submitted')
