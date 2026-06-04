@@ -23,6 +23,7 @@ export function AddChargeCodeDialog() {
   const [showCustom, setShowCustom] = useState(false)
   const [customCode, setCustomCode] = useState('')
   const [customDescription, setCustomDescription] = useState('')
+  const [customLocation, setCustomLocation] = useState('')
   const [customError, setCustomError] = useState('')
 
   const addedIds = useMemo(() => new Set(chargeCodes.map((c) => c.id)), [chargeCodes])
@@ -42,6 +43,14 @@ export function AddChargeCodeDialog() {
     )
   }, [assignedCodes, query])
 
+  const locationSuggestions = useMemo(() => {
+    const fromAssigned = assignedCodes
+      .map((c) => c.location)
+      .filter((l): l is string => Boolean(l))
+    const extras = ['Chicago', 'London', 'Singapore', 'Dubai', 'Mumbai', 'Bangalore', 'Remote']
+    return Array.from(new Set([...fromAssigned, ...extras]))
+  }, [assignedCodes])
+
   function toggle(codeId: string) {
     if (addedIds.has(codeId)) {
       removeChargeCode(codeId)
@@ -54,17 +63,21 @@ export function AddChargeCodeDialog() {
   function submitCustom() {
     const code = customCode.trim().toUpperCase()
     const description = customDescription.trim()
+    const location = customLocation.trim()
     if (!code) { setCustomError('Code is required'); return }
     if (!description) { setCustomError('Description is required'); return }
+    if (!location) { setCustomError('Location is required'); return }
     if (addedCodes.has(code.toLowerCase())) { setCustomError('Already added'); return }
     addChargeCode({
       id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `c-${Date.now()}`,
       code,
       description,
       category: 'grow',
+      location,
     })
     setCustomCode('')
     setCustomDescription('')
+    setCustomLocation('')
     setCustomError('')
     setShowCustom(false)
   }
@@ -73,6 +86,7 @@ export function AddChargeCodeDialog() {
     setShowCustom(false)
     setCustomCode('')
     setCustomDescription('')
+    setCustomLocation('')
     setCustomError('')
   }
 
@@ -211,6 +225,21 @@ export function AddChargeCodeDialog() {
                     onChange={(e) => { setCustomDescription(e.target.value); setCustomError('') }}
                     className="flex-1"
                   />
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Location (e.g. Boston, Gurugram, Remote)"
+                    value={customLocation}
+                    onChange={(e) => { setCustomLocation(e.target.value); setCustomError('') }}
+                    list="custom-location-suggestions"
+                    className="pl-9"
+                  />
+                  <datalist id="custom-location-suggestions">
+                    {locationSuggestions.map((loc) => (
+                      <option key={loc} value={loc} />
+                    ))}
+                  </datalist>
                 </div>
                 {customError && <p className="text-xs text-destructive">{customError}</p>}
                 <div className="flex items-center justify-end gap-2">
