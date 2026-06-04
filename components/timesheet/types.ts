@@ -10,7 +10,7 @@ export interface ChargeCode {
 
 export type PeriodType = 'weekly' | 'semi-monthly'
 
-export type TimesheetStatus = 'draft' | 'submitted'
+export type TimesheetStatus = 'draft' | 'saved' | 'submitted'
 
 export interface TimesheetEntry {
   chargeCodeId: string

@@ -146,10 +146,15 @@ export default function DashboardPage() {
             <CheckCircle2 className="w-3.5 h-3.5" />
             Submitted
           </Badge>
+        ) : status === 'saved' ? (
+          <Badge variant="outline" className="gap-1.5 text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400 text-sm px-3 py-1.5 h-auto">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Saved — {pct}% complete
+          </Badge>
         ) : (
           <Badge variant="outline" className="gap-1.5 text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400 text-sm px-3 py-1.5 h-auto">
             <Clock className="w-3.5 h-3.5" />
-            Draft — {pct}% complete
+            Unsaved — {pct}% complete
           </Badge>
         )}
       </div>

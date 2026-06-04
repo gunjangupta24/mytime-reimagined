@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   ChargeCode,
   PeriodType,
@@ -12,6 +12,7 @@ import {
 } from './types'
 import { Country, getHolidaysInPeriod } from './holidays'
 import { getPeriodBounds, addPeriod, getDatesInPeriod, isWeekend, formatDate } from './date-utils'
+import { readStorage, writeStorage, periodStorageKey, SavedPeriod } from './storage'
 
 interface TimesheetContextValue {
   chargeCodes: ChargeCode[]
@@ -26,9 +27,11 @@ interface TimesheetContextValue {
   recentlyAddedIds: Set<string>
   country: Country
   includeWeekends: boolean
+  lastSavedAt: Date | null
   setEntry: (chargeCodeId: string, dateStr: string, hours: number | '') => void
   fillDefaults: () => void
   copyLastPeriod: () => void
+  saveTimesheet: () => void
   submitTimesheet: () => void
   resetTimesheet: () => void
   addChargeCode: (code: ChargeCode) => void
@@ -51,11 +54,95 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set())
   const [country, setCountry] = useState<Country>('US')
   const [includeWeekends, setIncludeWeekends] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [hydrated, setHydrated] = useState(false)
 
   const { start: periodStart, end: periodEnd } = useMemo(
     () => getPeriodBounds(referenceDate, periodType),
     [referenceDate, periodType]
   )
+
+  /* ----------------------------- Persistence ----------------------------- */
+
+  // Refs let helpers read the freshest values without becoming useEffect deps.
+  const liveRef = useRef({
+    entries,
+    chargeCodes,
+    status,
+    periodType,
+    periodStart,
+    hasStarted,
+  })
+  useEffect(() => {
+    liveRef.current = { entries, chargeCodes, status, periodType, periodStart, hasStarted }
+  }, [entries, chargeCodes, status, periodType, periodStart, hasStarted])
+
+  /** Write the current period snapshot to localStorage. */
+  const persistPeriod = useCallback(
+    (override?: Partial<SavedPeriod> & { type?: PeriodType; start?: Date }) => {
+      const data = readStorage()
+      const type = override?.type ?? liveRef.current.periodType
+      const start = override?.start ?? liveRef.current.periodStart
+      const key = periodStorageKey(type, start)
+      const now = new Date()
+      data.periods[key] = {
+        entries: override?.entries ?? liveRef.current.entries,
+        chargeCodes: override?.chargeCodes ?? liveRef.current.chargeCodes,
+        status: override?.status ?? liveRef.current.status,
+        savedAt: override?.savedAt ?? now.toISOString(),
+      }
+      writeStorage(data)
+      return now
+    },
+    []
+  )
+
+  /** Replace in-memory state with whatever's saved for (type, start). */
+  const loadPeriod = useCallback((type: PeriodType, start: Date) => {
+    const data = readStorage()
+    const saved = data.periods[periodStorageKey(type, start)]
+    if (saved) {
+      setEntries(saved.entries ?? {})
+      setChargeCodes(saved.chargeCodes ?? [])
+      setStatus(saved.status ?? 'saved')
+      setLastSavedAt(saved.savedAt ? new Date(saved.savedAt) : null)
+      const hasAnything =
+        (saved.chargeCodes?.length ?? 0) > 0 || Object.keys(saved.entries ?? {}).length > 0
+      setHasStarted(hasAnything)
+      setRecentlyAddedIds(new Set())
+    } else {
+      setEntries({})
+      setChargeCodes([])
+      setStatus('draft')
+      setLastSavedAt(null)
+      setHasStarted(false)
+      setRecentlyAddedIds(new Set())
+    }
+  }, [])
+
+  // One-time hydration on mount: restore prefs + load current period.
+  useEffect(() => {
+    const data = readStorage()
+    const prefs = data.prefs ?? {}
+    const restoredType: PeriodType = prefs.periodType ?? 'semi-monthly'
+    const restoredCountry: Country = prefs.country ?? 'US'
+    const restoredWeekends = prefs.includeWeekends ?? false
+    setPeriodTypeState(restoredType)
+    setCountry(restoredCountry)
+    setIncludeWeekends(restoredWeekends)
+    const { start } = getPeriodBounds(referenceDate, restoredType)
+    loadPeriod(restoredType, start)
+    setHydrated(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Persist prefs whenever they change (after hydration).
+  useEffect(() => {
+    if (!hydrated) return
+    const data = readStorage()
+    data.prefs = { country, includeWeekends, periodType }
+    writeStorage(data)
+  }, [hydrated, country, includeWeekends, periodType])
 
   const setEntry = useCallback(
     (chargeCodeId: string, dateStr: string, hours: number | '') => {
@@ -66,7 +153,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
           [chargeCodeId]: hours,
         },
       }))
-      setStatus('draft')
+      setStatus((prev) => (prev === 'submitted' ? prev : 'draft'))
       setHasStarted(true)
     },
     []
@@ -149,13 +236,24 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
     setHasStarted(true)
   }, [chargeCodes, entries, periodStart, periodEnd])
 
+  const saveTimesheet = useCallback(() => {
+    const now = persistPeriod({ status: 'saved' })
+    setStatus('saved')
+    setLastSavedAt(now)
+  }, [persistPeriod])
+
   const submitTimesheet = useCallback(() => {
+    const now = persistPeriod({ status: 'submitted' })
     setStatus('submitted')
-  }, [])
+    setLastSavedAt(now)
+  }, [persistPeriod])
 
   const resetTimesheet = useCallback(() => {
+    // Mark in-memory + storage as draft again so the user can edit.
+    const now = persistPeriod({ status: 'draft' })
     setStatus('draft')
-  }, [])
+    setLastSavedAt(now)
+  }, [persistPeriod])
 
   const addChargeCode = useCallback((code: ChargeCode) => {
     setChargeCodes((prev) => {
@@ -170,6 +268,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       return next
     })
     setHasStarted(true)
+    setStatus((prev) => (prev === 'submitted' ? prev : 'draft'))
   }, [])
 
   const removeChargeCode = useCallback((id: string) => {
@@ -190,28 +289,39 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       next.delete(id)
       return next
     })
+    setStatus((prev) => (prev === 'submitted' ? prev : 'draft'))
   }, [])
+
+  /**
+   * Auto-save the current period if it has unsaved changes, so navigation
+   * never loses the user's work silently.
+   */
+  const autoSaveIfDirty = useCallback(() => {
+    if (liveRef.current.status === 'draft' && liveRef.current.hasStarted) {
+      persistPeriod({ status: 'saved' })
+    }
+  }, [persistPeriod])
 
   const navigatePeriod = useCallback(
     (delta: number) => {
-      setReferenceDate((prev) => addPeriod(prev, periodType, delta))
-      setStatus('draft')
-      setEntries({})
-      setChargeCodes([])
-      setHasStarted(false)
-      setRecentlyAddedIds(new Set())
+      autoSaveIfDirty()
+      const newRef = addPeriod(referenceDate, periodType, delta)
+      const { start: newStart } = getPeriodBounds(newRef, periodType)
+      setReferenceDate(newRef)
+      loadPeriod(periodType, newStart)
     },
-    [periodType]
+    [referenceDate, periodType, autoSaveIfDirty, loadPeriod]
   )
 
-  const setPeriodType = useCallback((type: PeriodType) => {
-    setPeriodTypeState(type)
-    setStatus('draft')
-    setEntries({})
-    setChargeCodes([])
-    setHasStarted(false)
-    setRecentlyAddedIds(new Set())
-  }, [])
+  const setPeriodType = useCallback(
+    (type: PeriodType) => {
+      autoSaveIfDirty()
+      const { start: newStart } = getPeriodBounds(referenceDate, type)
+      setPeriodTypeState(type)
+      loadPeriod(type, newStart)
+    },
+    [referenceDate, autoSaveIfDirty, loadPeriod]
+  )
 
   /**
    * Auto-manage the HOLIDAY charge code based on the active period and country.
@@ -283,9 +393,11 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       recentlyAddedIds,
       country,
       includeWeekends,
+      lastSavedAt,
       setEntry,
       fillDefaults,
       copyLastPeriod,
+      saveTimesheet,
       submitTimesheet,
       resetTimesheet,
       addChargeCode,
@@ -307,9 +419,11 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       recentlyAddedIds,
       country,
       includeWeekends,
+      lastSavedAt,
       setEntry,
       fillDefaults,
       copyLastPeriod,
+      saveTimesheet,
       submitTimesheet,
       resetTimesheet,
       addChargeCode,
