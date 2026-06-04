@@ -40,17 +40,22 @@ export const CATEGORY_LABELS: Record<Category, string> = {
  * Codes the user is currently assigned to. These show up in the
  * picker so the user can add them to their timesheet with one click —
  * no need to remember codes or fill in descriptions.
+ *
+ * A consultant has one home office (here: New York), so every code
+ * the user can charge against is tagged to the same location.
  */
+export const USER_HOME_LOCATION = 'New York'
+
 export const ASSIGNED_CHARGE_CODES: ChargeCode[] = [
-  { id: 'a1', code: 'PRJ-001', description: 'Project Alpha — Growth Strategy',     category: 'grow',         location: 'Gurugram' },
-  { id: 'a2', code: 'PRJ-002', description: 'Project Alpha — Operations',          category: 'run',          location: 'Gurugram' },
-  { id: 'a3', code: 'PRJ-003', description: 'Project Beta — Discovery',            category: 'grow',         location: 'Atlanta' },
-  { id: 'a4', code: 'PRJ-004', description: 'Project Gamma — Implementation',      category: 'run',          location: 'Boston' },
-  { id: 'a5', code: 'PRJ-005', description: 'Project Delta — Diagnostic',          category: 'grow',         location: 'New York' },
-  { id: 'a6', code: 'TRN-001', description: 'Training & Learning',                 category: 'non-billable', location: 'Home Office' },
-  { id: 'a7', code: 'ADM-001', description: 'Administration',                      category: 'non-billable', location: 'Home Office' },
-  { id: 'a8', code: 'REC-001', description: 'Recruiting',                          category: 'non-billable', location: 'Home Office' },
-  { id: 'a9', code: 'FW-001',  description: 'Firm Work',                           category: 'non-billable', location: 'Home Office' },
+  { id: 'a1', code: 'PRJ-001', description: 'Project Alpha — Growth Strategy',     category: 'grow',         location: USER_HOME_LOCATION },
+  { id: 'a2', code: 'PRJ-002', description: 'Project Alpha — Operations',          category: 'run',          location: USER_HOME_LOCATION },
+  { id: 'a3', code: 'PRJ-003', description: 'Project Beta — Discovery',            category: 'grow',         location: USER_HOME_LOCATION },
+  { id: 'a4', code: 'PRJ-004', description: 'Project Gamma — Implementation',      category: 'run',          location: USER_HOME_LOCATION },
+  { id: 'a5', code: 'PRJ-005', description: 'Project Delta — Diagnostic',          category: 'grow',         location: USER_HOME_LOCATION },
+  { id: 'a6', code: 'TRN-001', description: 'Training & Learning',                 category: 'non-billable', location: USER_HOME_LOCATION },
+  { id: 'a7', code: 'ADM-001', description: 'Administration',                      category: 'non-billable', location: USER_HOME_LOCATION },
+  { id: 'a8', code: 'REC-001', description: 'Recruiting',                          category: 'non-billable', location: USER_HOME_LOCATION },
+  { id: 'a9', code: 'FW-001',  description: 'Firm Work',                           category: 'non-billable', location: USER_HOME_LOCATION },
 ]
 
 /**

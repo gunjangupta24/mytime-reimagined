@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useTimesheet } from './timesheet-context'
-import { CATEGORY_COLORS } from './types'
+import { CATEGORY_COLORS, USER_HOME_LOCATION } from './types'
 import { cn } from '@/lib/utils'
 
 export function AddChargeCodeDialog() {
@@ -23,7 +23,7 @@ export function AddChargeCodeDialog() {
   const [showCustom, setShowCustom] = useState(false)
   const [customCode, setCustomCode] = useState('')
   const [customDescription, setCustomDescription] = useState('')
-  const [customLocation, setCustomLocation] = useState('')
+  const [customLocation, setCustomLocation] = useState(USER_HOME_LOCATION)
   const [customError, setCustomError] = useState('')
 
   const addedIds = useMemo(() => new Set(chargeCodes.map((c) => c.id)), [chargeCodes])
@@ -77,7 +77,7 @@ export function AddChargeCodeDialog() {
     })
     setCustomCode('')
     setCustomDescription('')
-    setCustomLocation('')
+    setCustomLocation(USER_HOME_LOCATION)
     setCustomError('')
     setShowCustom(false)
   }
@@ -86,7 +86,7 @@ export function AddChargeCodeDialog() {
     setShowCustom(false)
     setCustomCode('')
     setCustomDescription('')
-    setCustomLocation('')
+    setCustomLocation(USER_HOME_LOCATION)
     setCustomError('')
   }
 

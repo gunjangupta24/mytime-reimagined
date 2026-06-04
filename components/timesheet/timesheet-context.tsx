@@ -44,7 +44,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<TimesheetStatus>('draft')
   const [hasStarted, setHasStarted] = useState(false)
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set())
-  const [country, setCountry] = useState<Country>('IN')
+  const [country, setCountry] = useState<Country>('US')
 
   const { start: periodStart, end: periodEnd } = useMemo(
     () => getPeriodBounds(referenceDate, periodType),
