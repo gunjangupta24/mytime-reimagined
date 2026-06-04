@@ -112,6 +112,7 @@ export function Toolbar() {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
+      <AddChargeCodeDialog />
       <Button
         variant="outline"
         size="sm"
@@ -130,7 +131,6 @@ export function Toolbar() {
         <Copy className="h-3.5 w-3.5" />
         Copy Last Period
       </Button>
-      <AddChargeCodeDialog />
     </div>
   )
 }

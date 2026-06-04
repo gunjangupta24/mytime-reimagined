@@ -3,10 +3,9 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTimesheet } from './timesheet-context'
-import { formatPeriodLabel } from './date-utils'
 
 export function PeriodSelector() {
-  const { periodType, setPeriodType, periodStart, periodEnd, navigatePeriod } = useTimesheet()
+  const { periodType, setPeriodType, navigatePeriod } = useTimesheet()
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -38,9 +37,6 @@ export function PeriodSelector() {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="min-w-[180px] text-center text-sm font-semibold text-foreground tabular-nums">
-          {formatPeriodLabel(periodStart, periodEnd)}
-        </span>
         <Button
           variant="ghost"
           size="icon"

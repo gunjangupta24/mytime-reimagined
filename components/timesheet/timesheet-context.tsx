@@ -17,6 +17,7 @@ interface TimesheetContextValue {
   status: TimesheetStatus
   periodStart: Date
   periodEnd: Date
+  hasStarted: boolean
   setEntry: (chargeCodeId: string, dateStr: string, hours: number | '') => void
   fillDefaults: () => void
   copyLastPeriod: () => void
@@ -35,6 +36,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   const [periodType, setPeriodTypeState] = useState<PeriodType>('semi-monthly')
   const [referenceDate, setReferenceDate] = useState<Date>(new Date(2026, 5, 1)) // Jun 1 2026
   const [status, setStatus] = useState<TimesheetStatus>('draft')
+  const [hasStarted, setHasStarted] = useState(false)
 
   const { start: periodStart, end: periodEnd } = useMemo(
     () => getPeriodBounds(referenceDate, periodType),
@@ -51,6 +53,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
         },
       }))
       setStatus('draft')
+      setHasStarted(true)
     },
     []
   )
@@ -76,6 +79,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       return next
     })
     setStatus('draft')
+    setHasStarted(true)
   }, [chargeCodes, periodStart, periodEnd])
 
   const copyLastPeriod = useCallback(() => {
@@ -101,6 +105,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       return next
     })
     setStatus('draft')
+    setHasStarted(true)
   }, [chargeCodes, periodStart, periodEnd])
 
   const submitTimesheet = useCallback(() => {
@@ -113,6 +118,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
 
   const addChargeCode = useCallback((code: ChargeCode) => {
     setChargeCodes((prev) => [...prev, code])
+    setHasStarted(true)
   }, [])
 
   const navigatePeriod = useCallback(
@@ -120,6 +126,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       setReferenceDate((prev) => addPeriod(prev, periodType, delta))
       setStatus('draft')
       setEntries({})
+      setHasStarted(false)
     },
     [periodType]
   )
@@ -128,6 +135,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
     setPeriodTypeState(type)
     setStatus('draft')
     setEntries({})
+    setHasStarted(false)
   }, [])
 
   const value = useMemo<TimesheetContextValue>(
@@ -139,6 +147,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       status,
       periodStart,
       periodEnd,
+      hasStarted,
       setEntry,
       fillDefaults,
       copyLastPeriod,
@@ -156,6 +165,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       status,
       periodStart,
       periodEnd,
+      hasStarted,
       setEntry,
       fillDefaults,
       copyLastPeriod,

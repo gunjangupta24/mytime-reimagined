@@ -1,69 +1,31 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Sparkles } from 'lucide-react'
 import { PeriodSelector } from '@/components/timesheet/period-selector'
 import { TimesheetGrid } from '@/components/timesheet/timesheet-grid'
 import { MobileDayView } from '@/components/timesheet/mobile-day-view'
 import { Toolbar, StatusBar } from '@/components/timesheet/toolbar-statusbar'
 import { useTimesheet } from '@/components/timesheet/timesheet-context'
-import { getDatesInPeriod, isWeekend, formatDate } from '@/components/timesheet/date-utils'
-import { CATEGORY_LABELS } from '@/components/timesheet/types'
-import { useTheme } from '@/components/theme-provider'
 
-function CategoryLegend() {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
-  const items = [
-    { category: 'grow' as const, color: isDark ? '#4D6FFF' : '#2251FF' },
-    { category: 'run' as const, color: isDark ? '#22C55E' : '#16A34A' },
-    { category: 'non-billable' as const, color: isDark ? '#9CA3AF' : '#6B7280' },
-  ]
+function EmptyState() {
   return (
-    <div className="flex items-center gap-4 flex-wrap">
-      {items.map(({ category, color }) => (
-        <div key={category} className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-          <span className="text-xs text-muted-foreground">{CATEGORY_LABELS[category]}</span>
-        </div>
-      ))}
-      <div className="flex items-center gap-3 ml-auto flex-wrap text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" />
-          {'< 7h'}
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500" />
-          = 7h
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" />
-          {'> 7h'}
-        </span>
+    <div className="rounded-2xl border border-dashed border-border bg-card/40 px-6 py-16 flex flex-col items-center text-center gap-3">
+      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+        <Sparkles className="w-5 h-5 text-primary" />
+      </div>
+      <div>
+        <p className="text-base font-semibold text-foreground">No hours yet</p>
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+          Add a charge code, fill defaults, or copy your last period to get started.
+        </p>
       </div>
     </div>
   )
 }
 
 export default function TimesheetPage() {
-  const { chargeCodes, entries, periodStart, periodEnd } = useTimesheet()
-
-  const dates = getDatesInPeriod(periodStart, periodEnd)
-  const workdays = dates.filter(d => !isWeekend(d))
-  const totalHours = workdays.reduce((sum, d) => {
-    const ds = formatDate(d)
-    return sum + chargeCodes.reduce((s, cc) => {
-      const v = entries[ds]?.[cc.id]
-      return s + (typeof v === 'number' ? v : 0)
-    }, 0)
-  }, 0)
-  const filledDays = workdays.filter(d => {
-    const ds = formatDate(d)
-    return chargeCodes.some(cc => {
-      const v = entries[ds]?.[cc.id]
-      return typeof v === 'number' && v > 0
-    })
-  }).length
+  const { hasStarted } = useTimesheet()
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 flex flex-col gap-5">
@@ -76,35 +38,32 @@ export default function TimesheetPage() {
         Back to Home
       </Link>
 
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight">Timesheet</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {filledDays} of {workdays.length} workdays filled &middot; {totalHours}h total
-          </p>
-        </div>
+      {/* Period selector */}
+      <div className="flex justify-end">
         <PeriodSelector />
       </div>
 
       {/* Toolbar */}
       <Toolbar />
 
-      {/* Desktop Grid */}
-      <div className="hidden md:block">
-        <div className="mb-2">
-          <CategoryLegend />
-        </div>
-        <TimesheetGrid />
-      </div>
+      {hasStarted ? (
+        <>
+          {/* Desktop Grid */}
+          <div className="hidden md:block">
+            <TimesheetGrid />
+          </div>
 
-      {/* Mobile Day View */}
-      <div className="md:hidden">
-        <MobileDayView />
-      </div>
+          {/* Mobile Day View */}
+          <div className="md:hidden">
+            <MobileDayView />
+          </div>
 
-      {/* Status bar */}
-      <StatusBar />
+          {/* Status bar */}
+          <StatusBar />
+        </>
+      ) : (
+        <EmptyState />
+      )}
     </div>
   )
 }
