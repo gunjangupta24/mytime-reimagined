@@ -82,16 +82,18 @@ export function TimesheetGrid() {
               return (
                 <th
                   key={ds}
-                  title={holiday?.name}
+                  title={holiday?.name ?? (weekend ? 'Weekend' : undefined)}
                   className={cn(
-                    'text-center px-2 py-3 font-medium min-w-[68px]',
-                    weekend && 'bg-muted/50 text-muted-foreground/50',
-                    holiday && 'bg-amber-50 dark:bg-amber-950/30',
-                    !weekend && !holiday && 'text-foreground'
+                    'text-center px-2 py-3 font-medium min-w-[68px] text-foreground',
+                    weekend && 'bg-violet-50/60 dark:bg-violet-950/20',
+                    holiday && 'bg-amber-50 dark:bg-amber-950/30'
                   )}
                 >
                   <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] uppercase tracking-wider font-medium opacity-60">{day}</span>
+                    <span className={cn(
+                      'text-[10px] uppercase tracking-wider font-medium',
+                      weekend ? 'text-violet-700 dark:text-violet-400 opacity-90' : 'opacity-60'
+                    )}>{day}</span>
                     <span className="text-xs font-semibold">{date}</span>
                     {holiday && (
                       <span className="text-[9px] font-semibold text-amber-700 dark:text-amber-400 leading-tight mt-0.5 max-w-[64px] truncate">
@@ -162,9 +164,9 @@ export function TimesheetGrid() {
                   const val = entries[ds]?.[cc.id]
                   const isHolidayRow = cc.id === HOLIDAY_CODE_ID
 
-                  if (weekend) {
+                  if (weekend && isHolidayRow) {
                     return (
-                      <td key={ds} className="text-center px-2 py-2 bg-muted/30">
+                      <td key={ds} className="text-center px-2 py-2 bg-violet-50/40 dark:bg-violet-950/15">
                         <span className="text-muted-foreground/30 text-xs">—</span>
                       </td>
                     )
@@ -208,7 +210,13 @@ export function TimesheetGrid() {
                   }
 
                   return (
-                    <td key={ds} className="text-center px-1 py-1.5">
+                    <td
+                      key={ds}
+                      className={cn(
+                        'text-center px-1 py-1.5',
+                        weekend && 'bg-violet-50/40 dark:bg-violet-950/15'
+                      )}
+                    >
                       <input
                         type="number"
                         min={0}
@@ -231,7 +239,9 @@ export function TimesheetGrid() {
                             ? 'bg-muted/50 text-muted-foreground border-transparent cursor-not-allowed'
                             : 'bg-background border-input hover:border-primary/40 text-foreground',
                           val !== '' && val !== undefined && typeof val === 'number' && val > 0
-                            ? 'border-primary/30 bg-primary/5'
+                            ? weekend
+                              ? 'border-violet-400/40 bg-violet-100/70 dark:bg-violet-900/30'
+                              : 'border-primary/30 bg-primary/5'
                             : ''
                         )}
                       />
@@ -266,16 +276,12 @@ export function TimesheetGrid() {
                   key={ds}
                   className={cn(
                     'text-center px-2 py-2.5',
-                    weekend && 'opacity-30',
+                    weekend && 'bg-violet-50/40 dark:bg-violet-950/15',
                     holiday && 'bg-amber-50/60 dark:bg-amber-950/20'
                   )}
-                  title={holiday?.name}
+                  title={holiday?.name ?? (weekend ? 'Weekend' : undefined)}
                 >
-                  {weekend ? (
-                    <span className="text-muted-foreground/30 text-xs">—</span>
-                  ) : (
-                    <DailyTotalBadge total={dayTotals[ds] ?? 0} />
-                  )}
+                  <DailyTotalBadge total={dayTotals[ds] ?? 0} />
                 </td>
               )
             })}

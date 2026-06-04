@@ -30,11 +30,20 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
     return sum + (typeof v === 'number' ? v : 0)
   }, 0)
 
-  // Show only codes the user has filled today, plus any code they just added
-  // (so they can enter their first hour). Hides empty rows for less clutter.
+  // Show codes the user has filled today OR any code with hours elsewhere in
+  // the period (so weekend / unused-day cards still let them enter hours
+  // without forcing them back to the dialog). HOLIDAY row only appears on
+  // actual holiday days.
   const visibleCodes = chargeCodes.filter((cc) => {
+    if (cc.id === HOLIDAY_CODE_ID) return Boolean(holiday)
     const v = entries[ds]?.[cc.id]
-    return (typeof v === 'number' && v > 0) || recentlyAddedIds.has(cc.id)
+    if (typeof v === 'number' && v > 0) return true
+    if (recentlyAddedIds.has(cc.id)) return true
+    for (const dateStr of Object.keys(entries)) {
+      const otherV = entries[dateStr]?.[cc.id]
+      if (typeof otherV === 'number' && otherV > 0) return true
+    }
+    return false
   })
 
   const totalColor = dayTotal === 0
@@ -50,14 +59,21 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
 
   return (
     <div className={cn(
-      'rounded-xl border border-border bg-card shadow-sm overflow-hidden',
-      weekend && 'opacity-60',
-      holiday && 'border-amber-200 dark:border-amber-900'
+      'rounded-xl border bg-card shadow-sm overflow-hidden',
+      holiday
+        ? 'border-amber-200 dark:border-amber-900'
+        : weekend
+        ? 'border-violet-200 dark:border-violet-900'
+        : 'border-border'
     )}>
       {/* Card header */}
       <div className={cn(
         'flex items-center justify-between px-4 py-3 border-b border-border',
-        holiday ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-muted/20'
+        holiday
+          ? 'bg-amber-50 dark:bg-amber-950/30'
+          : weekend
+          ? 'bg-violet-50 dark:bg-violet-950/20'
+          : 'bg-muted/20'
       )}>
         <div>
           <p className="font-semibold text-foreground">{dayName}</p>
@@ -66,6 +82,11 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
               <PartyPopper className="w-3 h-3" />
               {holiday.name}
+            </p>
+          )}
+          {!holiday && weekend && (
+            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-violet-700 dark:text-violet-400">
+              Weekend
             </p>
           )}
         </div>
@@ -79,9 +100,11 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
 
       {/* Charge code rows */}
       <div className="divide-y divide-border/60">
-        {visibleCodes.length === 0 && !weekend && !holiday && (
+        {visibleCodes.length === 0 && !holiday && (
           <p className="px-4 py-6 text-center text-xs text-muted-foreground">
-            No hours yet. Add a code from the toolbar above.
+            {weekend
+              ? 'No hours on this weekend day. Add a code from the toolbar if you worked.'
+              : 'No hours yet. Add a code from the toolbar above.'}
           </p>
         )}
         {visibleCodes.map(cc => {
@@ -108,11 +131,9 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
                   )}
                 </div>
               </div>
-              {weekend ? (
-                <span className="text-xs text-muted-foreground/40 w-14 text-center">—</span>
-              ) : isHolidayRow ? (
+              {isHolidayRow ? (
                 <span className="inline-flex items-center justify-center w-14 h-9 text-sm font-bold text-amber-700 dark:text-amber-400 tabular-nums">
-                  {typeof val === 'number' ? val : 7}
+                  {typeof val === 'number' ? val : (holiday ? 7 : 0)}
                 </span>
               ) : (
                 <input
@@ -137,7 +158,9 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
                       ? 'bg-muted/50 text-muted-foreground border-transparent cursor-not-allowed'
                       : 'bg-background border-input hover:border-primary/40 text-foreground',
                     val !== '' && val !== undefined && typeof val === 'number' && val > 0
-                      ? 'border-primary/30 bg-primary/5'
+                      ? weekend
+                        ? 'border-violet-400/40 bg-violet-100/70 dark:bg-violet-900/30'
+                        : 'border-primary/30 bg-primary/5'
                       : ''
                   )}
                 />
@@ -199,7 +222,7 @@ export function MobileDayView() {
                     : dotHoliday
                     ? 'w-1.5 h-1.5 bg-amber-400'
                     : weekend
-                    ? 'w-1.5 h-1.5 bg-border'
+                    ? 'w-1.5 h-1.5 bg-violet-300 dark:bg-violet-700'
                     : 'w-1.5 h-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70'
                 )}
               />
