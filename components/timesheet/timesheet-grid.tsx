@@ -4,6 +4,7 @@ import { MapPin } from 'lucide-react'
 import { useTimesheet } from './timesheet-context'
 import { getDatesInPeriod, isWeekend, formatDate, formatColumnHeader } from './date-utils'
 import { getHoliday } from './holidays'
+import { HOLIDAY_CODE_ID, HOLIDAY_HOURS_PER_DAY } from './types'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
 
@@ -119,7 +120,10 @@ export function TimesheetGrid() {
           )}
           {visibleCodes.map((cc, rowIdx) => {
             const rowTotal = codeTotals[cc.id] ?? 0
-            const catColor = catColors[cc.category]
+            const isHolidayRowOuter = cc.id === HOLIDAY_CODE_ID
+            const catColor = isHolidayRowOuter
+              ? (isDark ? '#F59E0B' : '#D97706')
+              : catColors[cc.category]
             return (
               <tr
                 key={cc.id}
@@ -156,6 +160,7 @@ export function TimesheetGrid() {
                   const weekend = isWeekend(d)
                   const holiday = !weekend ? getHoliday(ds, country) : null
                   const val = entries[ds]?.[cc.id]
+                  const isHolidayRow = cc.id === HOLIDAY_CODE_ID
 
                   if (weekend) {
                     return (
@@ -165,16 +170,39 @@ export function TimesheetGrid() {
                     )
                   }
 
-                  if (holiday) {
+                  if (holiday && isHolidayRow) {
+                    // Auto-filled holiday hours — read-only, amber background
                     return (
                       <td
                         key={ds}
-                        className="text-center px-2 py-2 bg-amber-50/60 dark:bg-amber-950/20"
+                        className="text-center px-1 py-1.5 bg-amber-50/60 dark:bg-amber-950/20"
                         title={holiday.name}
                       >
-                        <span className="text-amber-700/70 dark:text-amber-400/70 text-[10px] font-medium">
-                          Holiday
+                        <span className="inline-flex items-center justify-center w-12 h-8 text-sm font-bold text-amber-700 dark:text-amber-400 tabular-nums">
+                          {typeof val === 'number' ? val : HOLIDAY_HOURS_PER_DAY}
                         </span>
+                      </td>
+                    )
+                  }
+
+                  if (holiday) {
+                    // Non-holiday rows on holiday days: just a dash
+                    return (
+                      <td
+                        key={ds}
+                        className="text-center px-2 py-2 bg-amber-50/30 dark:bg-amber-950/10"
+                        title={holiday.name}
+                      >
+                        <span className="text-muted-foreground/30 text-xs">—</span>
+                      </td>
+                    )
+                  }
+
+                  if (isHolidayRow) {
+                    // HOLIDAY row, non-holiday day: just a dash (no entry)
+                    return (
+                      <td key={ds} className="text-center px-2 py-2">
+                        <span className="text-muted-foreground/30 text-xs">—</span>
                       </td>
                     )
                   }
@@ -245,8 +273,6 @@ export function TimesheetGrid() {
                 >
                   {weekend ? (
                     <span className="text-muted-foreground/30 text-xs">—</span>
-                  ) : holiday ? (
-                    <span className="text-amber-700 dark:text-amber-400 text-[10px] font-semibold">Holiday</span>
                   ) : (
                     <DailyTotalBadge total={dayTotals[ds] ?? 0} />
                   )}

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useTimesheet } from './timesheet-context'
 import { getDatesInPeriod, isWeekend, formatDate } from './date-utils'
 import { getHoliday } from './holidays'
+import { HOLIDAY_CODE_ID } from './types'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
 
@@ -71,31 +72,30 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
         <div className="text-right">
           <p className="text-xs text-muted-foreground mb-0.5">Total</p>
           <p className={cn('text-lg font-bold tabular-nums', totalColor)}>
-            {holiday ? '—' : `${dayTotal}h`}
+            {dayTotal}h
           </p>
         </div>
       </div>
 
       {/* Charge code rows */}
       <div className="divide-y divide-border/60">
-        {holiday && (
-          <p className="px-4 py-6 text-center text-xs text-amber-700 dark:text-amber-400">
-            Public holiday — no entry needed.
-          </p>
-        )}
-        {!holiday && visibleCodes.length === 0 && !weekend && (
+        {visibleCodes.length === 0 && !weekend && !holiday && (
           <p className="px-4 py-6 text-center text-xs text-muted-foreground">
             No hours yet. Add a code from the toolbar above.
           </p>
         )}
-        {!holiday && visibleCodes.map(cc => {
+        {visibleCodes.map(cc => {
           const val = entries[ds]?.[cc.id]
+          const isHolidayRow = cc.id === HOLIDAY_CODE_ID
+          const dotColor = isHolidayRow
+            ? (isDark ? '#F59E0B' : '#D97706')
+            : catColors[cc.category]
           return (
             <div key={cc.id} className="flex items-center justify-between px-4 py-2.5 gap-3">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <span
                   className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: catColors[cc.category] }}
+                  style={{ backgroundColor: dotColor }}
                 />
                 <div className="min-w-0">
                   <p className="text-xs font-mono font-semibold text-foreground">{cc.code}</p>
@@ -110,6 +110,10 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
               </div>
               {weekend ? (
                 <span className="text-xs text-muted-foreground/40 w-14 text-center">—</span>
+              ) : isHolidayRow ? (
+                <span className="inline-flex items-center justify-center w-14 h-9 text-sm font-bold text-amber-700 dark:text-amber-400 tabular-nums">
+                  {typeof val === 'number' ? val : 7}
+                </span>
               ) : (
                 <input
                   type="number"

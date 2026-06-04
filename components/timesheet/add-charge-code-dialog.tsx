@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useTimesheet } from './timesheet-context'
-import { CATEGORY_COLORS, USER_HOME_LOCATION } from './types'
+import { CATEGORY_COLORS, HOLIDAY_CODE_ID, USER_HOME_LOCATION } from './types'
 import { cn } from '@/lib/utils'
 
 export function AddChargeCodeDialog() {
@@ -256,9 +256,14 @@ export function AddChargeCodeDialog() {
 
           <DialogFooter className="px-6 py-3 border-t border-border">
             <div className="flex items-center justify-between w-full gap-2">
-              <span className="text-xs text-muted-foreground">
-                {chargeCodes.length} {chargeCodes.length === 1 ? 'code' : 'codes'} in your timesheet
-              </span>
+              {(() => {
+                const userCount = chargeCodes.filter((c) => c.id !== HOLIDAY_CODE_ID).length
+                return (
+                  <span className="text-xs text-muted-foreground">
+                    {userCount} {userCount === 1 ? 'code' : 'codes'} in your timesheet
+                  </span>
+                )
+              })()}
               <Button size="sm" onClick={() => handleOpenChange(false)} className="h-8 text-xs">
                 Done
               </Button>

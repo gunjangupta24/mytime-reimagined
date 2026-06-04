@@ -62,3 +62,19 @@ export const ASSIGNED_CHARGE_CODES: ChargeCode[] = [
  * Kept for backwards compatibility — equivalent to ASSIGNED_CHARGE_CODES.
  */
 export const DEFAULT_CHARGE_CODES = ASSIGNED_CHARGE_CODES
+
+/**
+ * Special auto-managed charge code that captures public holidays.
+ * It is added/removed automatically based on the active period + country.
+ * Users can't add or remove it manually, and its cells are read-only.
+ */
+export const HOLIDAY_CODE_ID = '__holiday__'
+export const HOLIDAY_HOURS_PER_DAY = 7
+
+export const HOLIDAY_CHARGE_CODE: ChargeCode = {
+  id: HOLIDAY_CODE_ID,
+  code: 'HOLIDAY',
+  description: 'Public Holiday',
+  category: 'non-billable',
+  location: USER_HOME_LOCATION,
+}

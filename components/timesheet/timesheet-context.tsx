@@ -1,13 +1,16 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
 import {
   ChargeCode,
   PeriodType,
   TimesheetStatus,
   ASSIGNED_CHARGE_CODES,
+  HOLIDAY_CHARGE_CODE,
+  HOLIDAY_CODE_ID,
+  HOLIDAY_HOURS_PER_DAY,
 } from './types'
-import { Country } from './holidays'
+import { Country, getHolidaysInPeriod } from './holidays'
 import { getPeriodBounds, addPeriod, getDatesInPeriod, isWeekend, formatDate } from './date-utils'
 
 interface TimesheetContextValue {
@@ -170,6 +173,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const removeChargeCode = useCallback((id: string) => {
+    if (id === HOLIDAY_CODE_ID) return // auto-managed — users can't delete it
     setChargeCodes((prev) => prev.filter((c) => c.id !== id))
     setEntries((prev) => {
       const next: Record<string, Record<string, number | ''>> = {}
@@ -208,6 +212,62 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
     setHasStarted(false)
     setRecentlyAddedIds(new Set())
   }, [])
+
+  /**
+   * Auto-manage the HOLIDAY charge code based on the active period and country.
+   * Adds the code + pre-fills 7h on each public holiday in the period.
+   * Removes the code (and clears its entries) when no holidays are present.
+   */
+  useEffect(() => {
+    const periodStartStr = formatDate(periodStart)
+    const periodEndStr = formatDate(periodEnd)
+    const holidaysInPeriod = getHolidaysInPeriod(periodStartStr, periodEndStr, country)
+
+    if (holidaysInPeriod.length === 0) {
+      setChargeCodes((prev) =>
+        prev.some((c) => c.id === HOLIDAY_CODE_ID)
+          ? prev.filter((c) => c.id !== HOLIDAY_CODE_ID)
+          : prev
+      )
+      setEntries((prev) => {
+        let changed = false
+        const next: typeof prev = {}
+        for (const ds of Object.keys(prev)) {
+          if (prev[ds][HOLIDAY_CODE_ID] !== undefined) {
+            const row = { ...prev[ds] }
+            delete row[HOLIDAY_CODE_ID]
+            next[ds] = row
+            changed = true
+          } else {
+            next[ds] = prev[ds]
+          }
+        }
+        return changed ? next : prev
+      })
+      return
+    }
+
+    setChargeCodes((prev) =>
+      prev.some((c) => c.id === HOLIDAY_CODE_ID)
+        ? prev
+        : [HOLIDAY_CHARGE_CODE, ...prev]
+    )
+
+    setEntries((prev) => {
+      const next = { ...prev }
+      let changed = false
+      holidaysInPeriod.forEach((h) => {
+        const existing = next[h.date]?.[HOLIDAY_CODE_ID]
+        if (existing !== HOLIDAY_HOURS_PER_DAY) {
+          next[h.date] = { ...(next[h.date] || {}), [HOLIDAY_CODE_ID]: HOLIDAY_HOURS_PER_DAY }
+          changed = true
+        }
+      })
+      return changed ? next : prev
+    })
+
+    setHasStarted(true)
+  }, [periodStart, periodEnd, country])
 
   const value = useMemo<TimesheetContextValue>(
     () => ({
