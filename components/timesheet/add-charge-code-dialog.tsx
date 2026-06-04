@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Check, Plus, Search, X } from 'lucide-react'
+import { Check, MapPin, Plus, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -37,7 +37,8 @@ export function AddChargeCodeDialog() {
     return assignedCodes.filter(
       (c) =>
         c.code.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q)
+        c.description.toLowerCase().includes(q) ||
+        (c.location ?? '').toLowerCase().includes(q)
     )
   }, [assignedCodes, query])
 
@@ -109,7 +110,7 @@ export function AddChargeCodeDialog() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by code or project name"
+                placeholder="Search by code, project, or location"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-9 h-9"
@@ -157,6 +158,12 @@ export function AddChargeCodeDialog() {
                         <div className="min-w-0 flex-1">
                           <p className="font-mono text-xs font-semibold text-foreground">{cc.code}</p>
                           <p className="text-xs text-muted-foreground truncate">{cc.description}</p>
+                          {cc.location && (
+                            <p className="flex items-center gap-1 text-[10px] text-muted-foreground/80 mt-0.5">
+                              <MapPin className="w-2.5 h-2.5" />
+                              <span className="truncate">{cc.location}</span>
+                            </p>
+                          )}
                         </div>
                         <span
                           className={cn(

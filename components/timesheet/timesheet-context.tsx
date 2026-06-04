@@ -19,6 +19,7 @@ interface TimesheetContextValue {
   periodStart: Date
   periodEnd: Date
   hasStarted: boolean
+  recentlyAddedIds: Set<string>
   setEntry: (chargeCodeId: string, dateStr: string, hours: number | '') => void
   fillDefaults: () => void
   copyLastPeriod: () => void
@@ -39,6 +40,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
   const [referenceDate, setReferenceDate] = useState<Date>(new Date(2026, 5, 1)) // Jun 1 2026
   const [status, setStatus] = useState<TimesheetStatus>('draft')
   const [hasStarted, setHasStarted] = useState(false)
+  const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set())
 
   const { start: periodStart, end: periodEnd } = useMemo(
     () => getPeriodBounds(referenceDate, periodType),
@@ -148,6 +150,11 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, code]
     })
+    setRecentlyAddedIds((prev) => {
+      const next = new Set(prev)
+      next.add(code.id)
+      return next
+    })
     setHasStarted(true)
   }, [])
 
@@ -162,6 +169,12 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       }
       return next
     })
+    setRecentlyAddedIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
   }, [])
 
   const navigatePeriod = useCallback(
@@ -171,6 +184,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       setEntries({})
       setChargeCodes([])
       setHasStarted(false)
+      setRecentlyAddedIds(new Set())
     },
     [periodType]
   )
@@ -181,6 +195,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
     setEntries({})
     setChargeCodes([])
     setHasStarted(false)
+    setRecentlyAddedIds(new Set())
   }, [])
 
   const value = useMemo<TimesheetContextValue>(
@@ -194,6 +209,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       periodStart,
       periodEnd,
       hasStarted,
+      recentlyAddedIds,
       setEntry,
       fillDefaults,
       copyLastPeriod,
@@ -213,6 +229,7 @@ export function TimesheetProvider({ children }: { children: React.ReactNode }) {
       periodStart,
       periodEnd,
       hasStarted,
+      recentlyAddedIds,
       setEntry,
       fillDefaults,
       copyLastPeriod,

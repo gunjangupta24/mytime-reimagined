@@ -1,14 +1,10 @@
 'use client'
 
+import { MapPin } from 'lucide-react'
 import { useTimesheet } from './timesheet-context'
 import { getDatesInPeriod, isWeekend, formatDate, formatColumnHeader } from './date-utils'
-import { CATEGORY_COLORS, ChargeCode } from './types'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
-
-function getCellKey(dateStr: string, codeId: string) {
-  return `${dateStr}-${codeId}`
-}
 
 function DailyTotalBadge({ total }: { total: number }) {
   if (total === 0) return <span className="text-muted-foreground text-xs">—</span>
@@ -25,14 +21,14 @@ function DailyTotalBadge({ total }: { total: number }) {
 }
 
 export function TimesheetGrid() {
-  const { chargeCodes, entries, setEntry, periodStart, periodEnd, status } = useTimesheet()
+  const { chargeCodes, entries, setEntry, periodStart, periodEnd, status, recentlyAddedIds } = useTimesheet()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
 
   const dates = getDatesInPeriod(periodStart, periodEnd)
   const isReadOnly = status === 'submitted'
 
-  // Per-day totals
+  // Per-day totals (across all codes — used for footer)
   const dayTotals: Record<string, number> = {}
   dates.forEach(d => {
     const ds = formatDate(d)
@@ -51,6 +47,12 @@ export function TimesheetGrid() {
       return sum + (typeof v === 'number' ? v : 0)
     }, 0)
   })
+
+  // Only show rows with hours filled, plus any code the user JUST added so
+  // they can enter the first hour. Avoids wasted space from empty rows.
+  const visibleCodes = chargeCodes.filter(
+    (cc) => (codeTotals[cc.id] ?? 0) > 0 || recentlyAddedIds.has(cc.id)
+  )
 
   const grandTotal = Object.values(codeTotals).reduce((a, b) => a + b, 0)
 
@@ -94,7 +96,17 @@ export function TimesheetGrid() {
           </tr>
         </thead>
         <tbody>
-          {chargeCodes.map((cc, rowIdx) => {
+          {visibleCodes.length === 0 && (
+            <tr>
+              <td
+                colSpan={dates.length + 2}
+                className="text-center text-xs text-muted-foreground py-8"
+              >
+                No hours entered yet. Use the toolbar above to add a code or fill defaults.
+              </td>
+            </tr>
+          )}
+          {visibleCodes.map((cc, rowIdx) => {
             const rowTotal = codeTotals[cc.id] ?? 0
             const catColor = catColors[cc.category]
             return (
@@ -116,7 +128,13 @@ export function TimesheetGrid() {
                     />
                     <div className="min-w-0">
                       <div className="font-mono text-xs font-semibold text-foreground truncate">{cc.code}</div>
-                      <div className="text-xs text-muted-foreground truncate max-w-[150px]">{cc.description}</div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[180px]">{cc.description}</div>
+                      {cc.location && (
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 mt-0.5">
+                          <MapPin className="w-2.5 h-2.5" />
+                          <span className="truncate">{cc.location}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </td>

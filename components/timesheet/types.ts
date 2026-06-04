@@ -5,6 +5,7 @@ export interface ChargeCode {
   code: string
   description: string
   category: Category
+  location?: string
 }
 
 export type PeriodType = 'weekly' | 'semi-monthly'
@@ -41,15 +42,15 @@ export const CATEGORY_LABELS: Record<Category, string> = {
  * no need to remember codes or fill in descriptions.
  */
 export const ASSIGNED_CHARGE_CODES: ChargeCode[] = [
-  { id: 'a1', code: 'PRJ-001', description: 'Project Alpha — Growth Strategy',     category: 'grow' },
-  { id: 'a2', code: 'PRJ-002', description: 'Project Alpha — Operations',          category: 'run' },
-  { id: 'a3', code: 'PRJ-003', description: 'Project Beta — Discovery',            category: 'grow' },
-  { id: 'a4', code: 'PRJ-004', description: 'Project Gamma — Implementation',      category: 'run' },
-  { id: 'a5', code: 'PRJ-005', description: 'Project Delta — Diagnostic',          category: 'grow' },
-  { id: 'a6', code: 'TRN-001', description: 'Training & Learning',                 category: 'non-billable' },
-  { id: 'a7', code: 'ADM-001', description: 'Administration',                      category: 'non-billable' },
-  { id: 'a8', code: 'REC-001', description: 'Recruiting',                          category: 'non-billable' },
-  { id: 'a9', code: 'FW-001',  description: 'Firm Work',                           category: 'non-billable' },
+  { id: 'a1', code: 'PRJ-001', description: 'Project Alpha — Growth Strategy',     category: 'grow',         location: 'Gurugram' },
+  { id: 'a2', code: 'PRJ-002', description: 'Project Alpha — Operations',          category: 'run',          location: 'Gurugram' },
+  { id: 'a3', code: 'PRJ-003', description: 'Project Beta — Discovery',            category: 'grow',         location: 'Atlanta' },
+  { id: 'a4', code: 'PRJ-004', description: 'Project Gamma — Implementation',      category: 'run',          location: 'Boston' },
+  { id: 'a5', code: 'PRJ-005', description: 'Project Delta — Diagnostic',          category: 'grow',         location: 'New York' },
+  { id: 'a6', code: 'TRN-001', description: 'Training & Learning',                 category: 'non-billable', location: 'Home Office' },
+  { id: 'a7', code: 'ADM-001', description: 'Administration',                      category: 'non-billable', location: 'Home Office' },
+  { id: 'a8', code: 'REC-001', description: 'Recruiting',                          category: 'non-billable', location: 'Home Office' },
+  { id: 'a9', code: 'FW-001',  description: 'Firm Work',                           category: 'non-billable', location: 'Home Office' },
 ]
 
 /**

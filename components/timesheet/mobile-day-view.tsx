@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTimesheet } from './timesheet-context'
 import { getDatesInPeriod, isWeekend, formatDate } from './date-utils'
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
 
 function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
-  const { chargeCodes, entries, setEntry, status } = useTimesheet()
+  const { chargeCodes, entries, setEntry, status, recentlyAddedIds } = useTimesheet()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const ds = formatDate(date)
@@ -26,6 +26,13 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
     const v = entries[ds]?.[cc.id]
     return sum + (typeof v === 'number' ? v : 0)
   }, 0)
+
+  // Show only codes the user has filled today, plus any code they just added
+  // (so they can enter their first hour). Hides empty rows for less clutter.
+  const visibleCodes = chargeCodes.filter((cc) => {
+    const v = entries[ds]?.[cc.id]
+    return (typeof v === 'number' && v > 0) || recentlyAddedIds.has(cc.id)
+  })
 
   const totalColor = dayTotal === 0
     ? 'text-muted-foreground'
@@ -59,7 +66,12 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
 
       {/* Charge code rows */}
       <div className="divide-y divide-border/60">
-        {chargeCodes.map(cc => {
+        {visibleCodes.length === 0 && !weekend && (
+          <p className="px-4 py-6 text-center text-xs text-muted-foreground">
+            No hours yet. Add a code from the toolbar above.
+          </p>
+        )}
+        {visibleCodes.map(cc => {
           const val = entries[ds]?.[cc.id]
           return (
             <div key={cc.id} className="flex items-center justify-between px-4 py-2.5 gap-3">
@@ -71,6 +83,12 @@ function DayCard({ date, dayIndex }: { date: Date; dayIndex: number }) {
                 <div className="min-w-0">
                   <p className="text-xs font-mono font-semibold text-foreground">{cc.code}</p>
                   <p className="text-xs text-muted-foreground truncate">{cc.description}</p>
+                  {cc.location && (
+                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground/80 mt-0.5">
+                      <MapPin className="w-2.5 h-2.5" />
+                      <span className="truncate">{cc.location}</span>
+                    </p>
+                  )}
                 </div>
               </div>
               {weekend ? (
